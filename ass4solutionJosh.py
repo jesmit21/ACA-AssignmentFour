@@ -45,10 +45,7 @@ def detect_key(x, blockSize, hopSize, fs, bTune=False):
     maj_pc=t_pc[0]/(sum(t_pc[0])) # normalize major key chroma so the sum of all the pitch classes =1
     min_pc=t_pc[1]/(sum(t_pc[1])) # normalize minor key chroma so the sum of all the pitch classes =1
     key_per_block=np.zeros(12,2) #creates a matrix to count the total numbers of times a key is detected in the blocks
-        # row 0 is major, row 1 is minor  
-
-    # list of notes arranged so the index found by the looping corresponds to the right key
-    key_vec=np.array(['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']) 
+        # row 0 is major, row 1 is minor 
 
     for m in pitchChroma: # looping though the pitch chroma for each block
         block_chroma=m[1]/(sum(m[1])) # normalize block chroma so the sum of all the pitch classes =1
@@ -72,12 +69,8 @@ def detect_key(x, blockSize, hopSize, fs, bTune=False):
         else:
             key_per_block[closest_maj,0]+=1
         key_index = np.where(key_per_block == numpy.amax(key_per_block))
-        if key_index[1]==0:
-            key_name=key_vec[key_index[0]]+' Major'
-        else:
-            key_name=key_vec[key_index[0]]+' Minor'
-
-        return key_name
+        keyEstimate=key_index[0]+key_index[1]*12
+        return keyEstimate
 
 
 
