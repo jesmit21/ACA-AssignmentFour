@@ -132,13 +132,12 @@ def detect_key(x, blockSize, hopSize, fs, bTune=False):
         tfInHz=440
     else:
         tfInHz=estimate_tuning_freq(x, blockSize, hopSize, fs)
-    pitchChroma=np.average(extract_pitch_chroma(x, fs, tfInHz))
+    x, t=block_audio(x,blockSize,hopSize,fs)
+    pitchChroma=np.average(extract_pitch_chroma(x, fs, tfInHz), axis=1)
     t_pc = np.array([[6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88],
                     [6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17]])
     maj_pc=t_pc[0]/(sum(t_pc[0])) # normalize major key chroma so the sum of all the pitch classes =1
     min_pc=t_pc[1]/(sum(t_pc[1])) # normalize minor key chroma so the sum of all the pitch classes =1
-    key_per_block=np.zeros(12,2) #creates a matrix to count the total numbers of times a key is detected in the blocks
-        # row 0 is major, row 1 is minor
     norm_chroma=pitchChroma/(sum(pitchChroma)) # normalize block chroma so the sum of all the pitch classes =1
     closest_maj=0 # number of shifts for the closest major key
     closestdist_maj=999999 # euclidean distance for the closest major key
@@ -155,12 +154,10 @@ def detect_key(x, blockSize, hopSize, fs, bTune=False):
         if min_dist<closestdist_min:
             closest_min=i
             closestdist_min=min_dist
-    if closestdist_min>closestdist_maj:
-        key_per_block[closest_min,1]+=1
+    if closestdist_maj<closestdist_min:
+        keyEstimate=closest_maj 
     else:
-        key_per_block[closest_maj,0]+=1
-    key_index = np.where(key_per_block == np.amax(key_per_block))
-    keyEstimate=key_index[0]+key_index[1]*12
+        keyEstimate=closest_min+12
     return keyEstimate
 
 ###### -- ######
@@ -270,3 +267,13 @@ def evaluate(pathToAudioKey,pathToGTKey,pathToAudioTf,pathToGTTf):
     avg_deviationInCent = eval_tfe(pathToAudioTf,pathToGTTf)
 
     return(avg_accuracy, avg_deviationInCent)
+
+
+pathGTKey="key_tf/key_eval/GT/"
+pathAudioKey="key_tf/key_eval/audio/"
+pathGTTf="key_tf/tuning_eval/GT/"
+pathAudioTf="key_tf/tuning_eval/audio/"
+
+acc, dev=evaluate(pathAudioKey, pathGTKey, pathAudioTf, pathGTTf)
+print(acc)
+print(dev)
