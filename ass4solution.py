@@ -143,21 +143,25 @@ def detect_key(x, blockSize, hopSize, fs, bTune=False):
     closestdist_maj=999999 # euclidean distance for the closest major key
     closest_min=0 # number of shifts for the closest minor key
     closestdist_min=999999 # euclidean distance for the closest minor key
-    for i in range(len(maj_pc)):
+    for i in range(len(maj_pc)): # looping through all 12 keys in major and minor
+
         maj_shifted=np.roll(maj_pc, i) 
         min_shifted=np.roll(min_pc, i) 
+        # finding the euclidean distances between the normalized signal chroma and the normalized rotated key chromas
         maj_dist=distance.euclidean(norm_chroma, maj_shifted)
         min_dist=distance.euclidean(norm_chroma, min_shifted)
+        # finding if the euclidean distance for the current key chromas are lower than previous ones and saving them and the number or rotations if they are
         if maj_dist<closestdist_maj:
             closest_maj=i
             closestdist_maj=maj_dist
         if min_dist<closestdist_min:
             closest_min=i
             closestdist_min=min_dist
+    # finding if the best fitting major or minor key detected fits better
     if closestdist_maj<closestdist_min:
         keyEstimate=closest_maj 
     else:
-        keyEstimate=closest_min+12
+        keyEstimate=closest_min+12 # if minor, add 12 to make up for the indices
     return keyEstimate
 
 ###### -- ######
