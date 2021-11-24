@@ -132,39 +132,36 @@ def detect_key(x, blockSize, hopSize, fs, bTune=False):
         tfInHz=440
     else:
         tfInHz=estimate_tuning_freq(x, blockSize, hopSize, fs)
-    pitchChroma=extract_pitch_chroma(x, fs, tfInHz)
-    distance.euclidean([1, 0, 0], [0, 1, 0])
+    pitchChroma=np.average(extract_pitch_chroma(x, fs, tfInHz))
     t_pc = np.array([[6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88],
                     [6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17]])
     maj_pc=t_pc[0]/(sum(t_pc[0])) # normalize major key chroma so the sum of all the pitch classes =1
     min_pc=t_pc[1]/(sum(t_pc[1])) # normalize minor key chroma so the sum of all the pitch classes =1
     key_per_block=np.zeros(12,2) #creates a matrix to count the total numbers of times a key is detected in the blocks
-        # row 0 is major, row 1 is minor 
-
-    for m in pitchChroma: # looping though the pitch chroma for each block
-        block_chroma=m[1]/(sum(m[1])) # normalize block chroma so the sum of all the pitch classes =1
-        closest_maj=0 # number of shifts for the closest major key
-        closestdist_maj=999999 # euclidean distance for the closest major key
-        closest_min=0 # number of shifts for the closest minor key
-        closestdist_min=999999 # euclidean distance for the closest minor key
-        for i in range(len(maj_pc)):
-            maj_shifted=np.roll(maj_pc, i) 
-            min_shifted=np.roll(min_pc, i) 
-            maj_dist=distance.euclidean(block_chroma, maj_shifted)
-            min_dist=distance.euclidean(block_chroma, min_shifted)
-            if maj_dist<closestdist_maj:
-                closest_maj=i
-                closestdist_maj=maj_dist
-            if min_dist<closestdist_min:
-                closest_min=i
-                closestdist_min=min_dist
-        if closestdist_min>closestdist_maj:
-            key_per_block[closest_min,1]+=1
-        else:
-            key_per_block[closest_maj,0]+=1
-        key_index = np.where(key_per_block == np.amax(key_per_block))
-        keyEstimate=key_index[0]+key_index[1]*12
-        return keyEstimate
+        # row 0 is major, row 1 is minor
+    norm_chroma=pitchChroma/(sum(pitchChroma)) # normalize block chroma so the sum of all the pitch classes =1
+    closest_maj=0 # number of shifts for the closest major key
+    closestdist_maj=999999 # euclidean distance for the closest major key
+    closest_min=0 # number of shifts for the closest minor key
+    closestdist_min=999999 # euclidean distance for the closest minor key
+    for i in range(len(maj_pc)):
+        maj_shifted=np.roll(maj_pc, i) 
+        min_shifted=np.roll(min_pc, i) 
+        maj_dist=distance.euclidean(norm_chroma, maj_shifted)
+        min_dist=distance.euclidean(norm_chroma, min_shifted)
+        if maj_dist<closestdist_maj:
+            closest_maj=i
+            closestdist_maj=maj_dist
+        if min_dist<closestdist_min:
+            closest_min=i
+            closestdist_min=min_dist
+    if closestdist_min>closestdist_maj:
+        key_per_block[closest_min,1]+=1
+    else:
+        key_per_block[closest_maj,0]+=1
+    key_index = np.where(key_per_block == np.amax(key_per_block))
+    keyEstimate=key_index[0]+key_index[1]*12
+    return keyEstimate
 
 ###### -- ######
 ###### C1 ######
