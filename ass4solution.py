@@ -89,7 +89,39 @@ def estimate_tuning_freq(x,blockSize,hopSize,fs):
 ###### B1 ######
 ###### -- ######
 
-# INSERT CODE HERE JOEY
+def extract_pitch_chroma(X, fs, tfInHz=440):
+    PITCH_C3 = 48
+    PITCH_C6 = 84
+
+    def midi2freq(p, tuning_freq):
+        return tuning_freq * (2 ** ((p - 69) / 12))
+
+    def freq2bin(f, fs, block_length):
+        return block_length / fs * f
+
+    block_length = (X.shape[0] - 1) * 2
+    num_blocks = X.shape[1]
+
+    boundary_pitches = np.arange(PITCH_C3 - 0.5, PITCH_C6 + 0.5)
+    boundary_freqs = midi2freq(boundary_pitches, tfInHz)
+    boundary_bins = freq2bin(boundary_freqs, fs, block_length)
+
+    pitchChroma = np.zeros([12, num_blocks])
+
+    for i in range(PITCH_C6 - PITCH_C3):
+        low_bin = math.floor(boundary_bins[i])
+        high_bin = math.ceil(boundary_bins[i+1])
+        weights = np.sum(X[low_bin:high_bin+1, :], axis=0)
+        weights *= 1 / (high_bin - low_bin + 1)
+
+        pitchChroma[i % 12, :] += weights
+
+    # normalize using L1 norm
+    norm_factors = np.sum(pitchChroma, axis=0)
+
+    pitchChroma /= norm_factors
+
+    return pitchChroma
 
 ###### -- ######
 ###### B2 ######
